@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Admin Panel - Phishing Detection Platform</title>
+  <style>
+    body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: #0f172a; color: #cbd5e1; margin: 0; padding: 20px; }
+    .container { max-width: 900px; margin: 20px auto; background: #1e293b; padding: 30px; border-radius: 12px; box-shadow: 0 4px 12px rgba(0,0,0,0.3); }
+    h2 { text-align: center; color: #38bdf8; margin-top: 0; }
+    .admin-header { display: flex; justify-content: space-between; align-items: center; background: #0f172a; padding: 12px 20px; border-radius: 8px; margin-bottom: 25px; }
+    button { padding: 10px 16px; background: #ef4444; color: white; border: none; border-radius: 6px; font-weight: bold; cursor: pointer; }
+    button:hover { background: #dc2626; }
+    table { width: 100%; border-collapse: collapse; margin-top: 15px; background: #0f172a; border-radius: 8px; overflow: hidden; }
+    th, td { padding: 12px 15px; text-align: left; border-bottom: 1px solid #334155; font-size: 14px; }
+    th { background: #334155; color: #38bdf8; }
+    .section-title { color: #38bdf8; margin-top: 30px; border-bottom: 2px solid #334155; padding-bottom: 8px; }
+  </style>
+</head>
+<body>
+
+  <!-- Admin Protection Guard -->
+  <script>
+    const currentUser = JSON.parse(localStorage.getItem('user'));
+    if (!currentUser) {
+      window.location.replace('login.html');
+    }
+  </script>
+
+  <div class="container">
+    <div class="admin-header">
+      <span style="color: #38bdf8; font-weight: bold; font-size: 16px;">🛡️ Admin Control Panel</span>
+      <button onclick="handleLogout()">Logout</button>
+    </div>
+
+    <h2 class="section-title">Registered Users Management</h2>
+    <div style="overflow-x: auto;">
+      <table>
+        <thead>
+          <tr>
+            <th>User ID</th>
+            <th>Email</th>
+            <th>Role</th>
+            <th>Joined Date</th>
+          </tr>
+        </thead>
+        <tbody id="users-table-body">
+          <tr><td colspan="4" style="text-align: center;">Loading users...</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <h2 class="section-title">Global System Threat & Scan Logs</h2>
+    <div style="overflow-x: auto;">
+      <table>
+        <thead>
+          <tr>
+            <th>User Email</th>
+            <th>Target URL / Content</th>
+            <th>Status</th>
+            <th>Risk Score</th>
+            <th>Timestamp</th>
+          </tr>
+        </thead>
+        <tbody id="scans-table-body">
+          <tr><td colspan="5" style="text-align: center;">Loading global scans...</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <script>
+    window.onload = function() {
+      loadAdminData();
+    };
+
+    function handleLogout() {
+      localStorage.removeItem('user');
+      window.location.replace('login.html');
+    }
+
+   async function loadAdminData() {
+      try {
+        // 1. Fetch Users with proper port
+        const userRes = await fetch('http://127.0.0.1:3000/api/admin/users');
+        const userData = await userRes.json();
+        
+        const usersTable = document.getElementById('users-table-body');
+        if (userData.success && userData.users.length > 0) {
+          let userHtml = '';
+          userData.users.forEach(u => {
+            userHtml += `<tr>
+              <td>${u.id}</td>
+              <td>${u.email}</td>
+              <td>${u.role || 'User'}</td>
+              <td>${new Date(u.created_at).toLocaleString()}</td>
+            </tr>`;
+          });
+          usersTable.innerHTML = userHtml;
+        } else {
+          usersTable.innerHTML = `<tr><td colspan="4" style="text-align: center;">No users found.</td></tr>`;
+        }
+
+        // 2. Fetch Global Scan Logs with proper port
+        const scanRes = await fetch('http://127.0.0.1:3000/api/admin/all-scans');
+        const scanData = await scanRes.json();
+
+        const scansTable = document.getElementById('scans-table-body');
+        if (scanData.success && scanData.scans.length > 0) {
+          let scanHtml = '';
+          scanData.scans.forEach(s => {
+            const userEmail = s.user_email || 'Registered User';
+            const threatStatus = s.threat_level || s.status || 'Safe';
+            const riskColor = threatStatus.toLowerCase().includes('safe') ? '#22c55e' : '#ef4444';
+
+            scanHtml += `<tr>
+              <td>${userEmail}</td>
+              <td>${s.target_url || s.url || 'N/A'}</td>
+              <td style="color: ${riskColor}; font-weight: bold;">${threatStatus}</td>
+              <td>${s.risk_score || 0} / 100</td>
+              <td>${new Date(s.created_at).toLocaleString()}</td>
+            </tr>`;
+          });
+          scansTable.innerHTML = scanHtml;
+        } else {
+          scansTable.innerHTML = `<tr><td colspan="5" style="text-align: center;">No global scans found.</td></tr>`;
+        }
+
+      } catch (err) {
+        console.error("Admin data loading error:", err);
+      }
+    }
+  </script>
+</body>
+</html>

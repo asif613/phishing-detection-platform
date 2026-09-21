@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Login - Phishing Detection Platform</title>
+  <style>
+    body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: #0f172a; color: #cbd5e1; margin: 0; padding: 40px; display: flex; justify-content: center; align-items: center; height: 100vh; box-sizing: border-box; }
+    .container { width: 100%; max-width: 450px; background: #1e293b; padding: 30px; border-radius: 12px; box-shadow: 0 4px 6px rgba(0,0,0,0.3); }
+    h2 { text-align: center; color: #38bdf8; margin-top: 0; }
+    label { display: block; margin-top: 15px; font-weight: 600; color: #cbd5e1; }
+    input { width: 100%; padding: 12px; margin-top: 6px; background: #0f172a; border: 1px solid #334155; color: #fff; border-radius: 6px; box-sizing: border-box; }
+    button { width: 100%; padding: 14px; background: #0284c7; color: white; border: none; border-radius: 6px; font-weight: bold; cursor: pointer; margin-top: 10px; }
+    button:hover { background: #0369a1; }
+  </style>
+</head>
+<body>
+
+  <div class="container">
+    <h2>User Authentication</h2>
+    <label>Full Name (For Register)</label>
+    <input type="text" id="auth-name" placeholder="Enter your full name">
+    
+    <label>Email Address</label>
+    <input type="email" id="auth-email" placeholder="Enter email">
+    
+    <label>Password</label>
+    <input type="password" id="auth-password" placeholder="Enter password">
+    
+    <div style="display: flex; gap: 10px; margin-top: 20px;">
+      <button onclick="handleRegister()" style="background: #28a745;">Register</button>
+      <button onclick="handleLogin()" style="background: #007bff;">Login</button>
+    </div>
+  </div>
+
+  <script>
+    async function handleLogin() {
+      const email = document.getElementById('auth-email').value;
+      const password = document.getElementById('auth-password').value;
+
+      try {
+        const response = await fetch('http://127.0.0.1:3000/api/auth/login', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ email, password })
+        });
+        const data = await response.json();
+        
+        if (data.success) {
+          localStorage.setItem('user', JSON.stringify(data.user));
+          alert("Login Successful!");
+          window.location.href = 'dashboard.html'; // Redirect to Dashboard
+        } else {
+          alert(data.message || "Login failed");
+        }
+      } catch (error) {
+        console.error("Login error:", error);
+      }
+    }
+
+    async function handleRegister() {
+      const email = document.getElementById('auth-email').value;
+      const password = document.getElementById('auth-password').value;
+
+      try {
+        const response = await fetch('http://127.0.0.1:3000/api/auth/register', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ email, password })
+        });
+        const data = await response.json();
+        
+        if (data.success) {
+          alert("Registration Successful! Please login.");
+        } else {
+          alert(data.message || "Registration failed");
+        }
+      } catch (error) {
+        console.error("Register error:", error);
+      }
+    }
+  </script>
+</body>
+</html>
